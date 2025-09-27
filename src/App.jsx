@@ -1,32 +1,34 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 function App() {
   const [userInput, setUserInput] = useState("");
   const [responses, setResponses] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  // Auto-scroll to latest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [responses]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!userInput.trim()) return;
-  
-    // Show user input immediately
-    setResponses((prev) => [...prev, { question: userInput, answer: "Thinking..." }]);
-  
+    if (!userInput.trim() || loading) return;
+
+    setLoading(true);
     const currentQuestion = userInput;
+    setResponses((prev) => [...prev, { question: currentQuestion, answer: "Thinking..." }]);
     setUserInput("");
-  
+
     try {
-      const res = await fetch("http://localhost:8000/gpt", {  // Your backend URL
+      const res = await fetch("http://localhost:8000/gpt", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: currentQuestion }),
       });
-  
       const data = await res.json();
       const gptAnswer = data.answer;
-  
-      // Update the last response with GPT answer
+
       setResponses((prev) => {
         const updated = [...prev];
         updated[updated.length - 1] = { question: currentQuestion, answer: gptAnswer };
@@ -40,14 +42,12 @@ function App() {
         return updated;
       });
     }
+    setLoading(false);
   };
-  
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <header className="text-3xl font-bold mb-6 text-center">
-        ASU Safe Transport
-      </header>
+      <header className="text-3xl font-bold mb-6 text-center">ASU Safe Transport</header>
 
       <form onSubmit={handleSubmit} className="mb-4 flex justify-center gap-2">
         <input
@@ -59,9 +59,10 @@ function App() {
         />
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          disabled={loading}
+          className={`px-4 py-2 rounded text-white ${loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}
         >
-          Submit
+          {loading ? "Thinking..." : "Submit"}
         </button>
       </form>
 
@@ -74,6 +75,7 @@ function App() {
             <p>{r.answer}</p>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
     </div>
   );
