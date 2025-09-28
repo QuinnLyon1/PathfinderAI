@@ -31,7 +31,7 @@ async def get_gpt_answer(q: Question):
             temperature=0.4,
             max_tokens=300,
         )
-        answer = response.choices[0].message["content"]
+        answer = response.choices[0].message.content
         return {"answer": answer}
     except Exception as e:
         return {"answer": f"Error: {str(e)}"}
