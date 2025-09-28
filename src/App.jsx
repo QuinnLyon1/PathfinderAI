@@ -1,4 +1,3 @@
-import "./App.css";
 import { useState } from "react";
 import Header from "./components/Header.jsx";
 import QueryForm from "./components/QueryForm.jsx";
@@ -7,13 +6,26 @@ import ResultCard from "./components/ResultCard.jsx";
 export default function App() {
   const [results, setResults] = useState([]);
 
-  function handleAsk(q) {
-    // Temporary mock results so the UI looks real
-    setResults([
-      { title: "Safest Route", subtitle: "Low flood risk", body: "Avoid underpasses near Rio Salado. ETA ~15 min walking." },
-      { title: "Fastest Route", subtitle: "Quick", body: "Direct via University Dr. ETA ~12 min walking." },
-      { title: "Greenest Option", subtitle: "Zero CO₂", body: "Campus paths w/ covered walkways. ETA ~18 min." },
-    ]);
+  // ← This is handleAsk
+  async function handleAsk(question) {
+    if (!question.trim()) return;
+  
+    setResults([{ title: "Thinking...", subtitle: "", body: "Fetching AI response..." }]);
+  
+    try {
+      const res = await fetch("http://localhost:8000/gpt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+  
+      const data = await res.json();
+  
+      setResults([{ title: "GPT Answer", subtitle: "AI Suggestion", body: data.answer }]);
+    } catch (err) {
+      console.error(err);
+      setResults([{ title: "Error", subtitle: "", body: "Could not contact GPT backend." }]);
+    }
   }
 
   return (
@@ -25,24 +37,17 @@ export default function App() {
           <p className="pf-subtitle">Smart, safe, and sustainable routing for dust storms & flooding.</p>
         </section>
 
+        {/* Pass handleAsk to QueryForm */}
         <QueryForm onSubmit={handleAsk} />
 
         <div className="pf-grid">
           {results.map((r, i) => (
             <ResultCard key={i} title={r.title} subtitle={r.subtitle}>
               <p>{r.body}</p>
-              <div className="pf-actions">
-                <button className="pf-button pf-secondary">Show on map</button>
-                <button className="pf-button pf-tertiary">Details</button>
-              </div>
             </ResultCard>
           ))}
         </div>
       </main>
-
-      <footer className="pf-footer">
-        <small>© {new Date().getFullYear()} PathfinderAI · Tempe, AZ</small>
-      </footer>
     </div>
   );
 }

@@ -5,7 +5,9 @@ export default function QueryForm({ onSubmit }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    onSubmit?.(q);
+    if (!q.trim()) return;
+    onSubmit(q);   // ← this calls handleAsk in App.jsx
+    setQ("");      // clear input
   }
 
   return (
