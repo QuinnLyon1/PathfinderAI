@@ -5,12 +5,14 @@ import ResultCard from "./components/ResultCard.jsx";
 
 export default function App() {
   const [results, setResults] = useState([]);
+  const [weather, setWeather] = useState(null); // store current weather
 
   // ← This is handleAsk
   async function handleAsk(question) {
     if (!question.trim()) return;
   
     setResults([{ title: "Thinking...", subtitle: "", body: "Fetching AI response..." }]);
+    setWeather(null); // reset weather while loading
   
     try {
       const res = await fetch("http://localhost:8000/gpt", {
@@ -39,6 +41,24 @@ export default function App() {
 
         {/* Pass handleAsk to QueryForm */}
         <QueryForm onSubmit={handleAsk} />
+
+         {/* Weather display */}
+         {weather && (
+          <div className="pf-weather">
+            <h3>Current Weather at ASU:</h3>
+            <p>{weather.description}</p>
+            <p>Temp: {weather.temp}°F</p>
+            <p>Wind: {weather.wind_speed} mph</p>
+            {weather.dust_alert && <p>⚠️ Dust alert active</p>}
+            {weather.rain_alert && <p>🌧 Rain alert active</p>}
+          </div>
+        )}
+        {weather && weather.error && (
+         <div className="pf-weather-error">
+           <p>Could not fetch weather: {weather.error}</p>
+        </div>
+        )}
+        
 
         <div className="pf-grid">
           {results.map((r, i) => (
