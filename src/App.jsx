@@ -1,84 +1,48 @@
-import { useState, useRef, useEffect } from "react";
+import "./App.css";
+import { useState } from "react";
+import Header from "./components/Header.jsx";
+import QueryForm from "./components/QueryForm.jsx";
+import ResultCard from "./components/ResultCard.jsx";
 
-function App() {
-  const [userInput, setUserInput] = useState("");
-  const [responses, setResponses] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef(null);
+export default function App() {
+  const [results, setResults] = useState([]);
 
-  // Auto-scroll to latest message
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [responses]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!userInput.trim() || loading) return;
-
-    setLoading(true);
-    const currentQuestion = userInput;
-    setResponses((prev) => [...prev, { question: currentQuestion, answer: "Thinking..." }]);
-    setUserInput("");
-
-    try {
-      const res = await fetch("http://localhost:8000/gpt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: currentQuestion }),
-      });
-      const data = await res.json();
-      const gptAnswer = data.answer;
-
-      setResponses((prev) => {
-        const updated = [...prev];
-        updated[updated.length - 1] = { question: currentQuestion, answer: gptAnswer };
-        return updated;
-      });
-    } catch (err) {
-      console.error(err);
-      setResponses((prev) => {
-        const updated = [...prev];
-        updated[updated.length - 1] = { question: currentQuestion, answer: "Error contacting GPT" };
-        return updated;
-      });
-    }
-    setLoading(false);
-  };
+  function handleAsk(q) {
+    // Temporary mock results so the UI looks real
+    setResults([
+      { title: "Safest Route", subtitle: "Low flood risk", body: "Avoid underpasses near Rio Salado. ETA ~15 min walking." },
+      { title: "Fastest Route", subtitle: "Quick", body: "Direct via University Dr. ETA ~12 min walking." },
+      { title: "Greenest Option", subtitle: "Zero CO₂", body: "Campus paths w/ covered walkways. ETA ~18 min." },
+    ]);
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <header className="text-3xl font-bold mb-6 text-center">ASU Safe Transport</header>
+    <div className="pf-app">
+      <Header />
+      <main className="pf-main">
+        <section className="pf-hero">
+          <h1>ASU Safe Transport</h1>
+          <p className="pf-subtitle">Smart, safe, and sustainable routing for dust storms & flooding.</p>
+        </section>
 
-      <form onSubmit={handleSubmit} className="mb-4 flex justify-center gap-2">
-        <input
-          type="text"
-          placeholder="Ask about safe routes..."
-          value={userInput}
-          onChange={(e) => setUserInput(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 w-96"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className={`px-4 py-2 rounded text-white ${loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}
-        >
-          {loading ? "Thinking..." : "Submit"}
-        </button>
-      </form>
+        <QueryForm onSubmit={handleAsk} />
 
-      <div className="max-w-xl mx-auto">
-        {responses.map((r, index) => (
-          <div key={index} className="mb-4 p-3 bg-white rounded shadow">
-            <p className="font-semibold">You:</p>
-            <p>{r.question}</p>
-            <p className="mt-2 font-semibold">GPT:</p>
-            <p>{r.answer}</p>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+        <div className="pf-grid">
+          {results.map((r, i) => (
+            <ResultCard key={i} title={r.title} subtitle={r.subtitle}>
+              <p>{r.body}</p>
+              <div className="pf-actions">
+                <button className="pf-button pf-secondary">Show on map</button>
+                <button className="pf-button pf-tertiary">Details</button>
+              </div>
+            </ResultCard>
+          ))}
+        </div>
+      </main>
+
+      <footer className="pf-footer">
+        <small>© {new Date().getFullYear()} PathfinderAI · Tempe, AZ</small>
+      </footer>
     </div>
   );
 }
-
-export default App;
